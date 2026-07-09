@@ -10,6 +10,11 @@ export type AuthResponse = {
   user: User;
 };
 
+export type AuthSession = {
+  token: string;
+  user: User;
+};
+
 export type Question = {
   id: number;
   content: string;
@@ -32,6 +37,13 @@ export type CreateRoomResponse = {
   message: string;
   roomCode: string;
   questionCount: number;
+};
+
+export type SubmitScoreResponse = {
+  message: string;
+  roomCode: string;
+  userId: number;
+  correctCount: number;
 };
 
 export type LeaderboardItem = {

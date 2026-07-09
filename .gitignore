@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs and caches
+dist/
+**/dist/
+build/
+coverage/
+web-build/
+.expo/
+**/.expo/
+.vite/
+**/.vite/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+*.log
+*.tsbuildinfo
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+**/.vscode/
+

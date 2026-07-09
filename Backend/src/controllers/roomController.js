@@ -1,230 +1,238 @@
 const db = require('../config/db');
 
+const QUESTION_COUNT = 15;
+
+function sendServerError(res, error, message = 'Lỗi server!') {
+    console.error(error);
+    return res.status(500).json({ message });
+}
+
+async function findRoomByCode(roomCode) {
+    const [rooms] = await db.query(
+        'SELECT id, status FROM rooms WHERE room_code = ?',
+        [roomCode]
+    );
+
+    return rooms[0] ?? null;
+}
+
+async function createUniqueRoomCode() {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+        const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const [rooms] = await db.query('SELECT id FROM rooms WHERE room_code = ?', [roomCode]);
+
+        if (rooms.length === 0) {
+            return roomCode;
+        }
+    }
+
+    throw new Error('Không tạo được mã phòng duy nhất.');
+}
+
+async function pickQuestionIds() {
+    const questionIds = [];
+
+    for (let difficulty = 1; difficulty <= QUESTION_COUNT; difficulty += 1) {
+        const [questions] = await db.query(
+            'SELECT id FROM questions WHERE difficulty = ? ORDER BY RAND() LIMIT 1',
+            [difficulty]
+        );
+
+        if (questions.length === 0) {
+            throw new Error(`Ngân hàng câu hỏi chưa có câu ở mức độ khó ${difficulty}.`);
+        }
+
+        questionIds.push(questions[0].id);
+    }
+
+    return questionIds;
+}
+
+async function countCorrectAnswers(roomId, answers) {
+    const [correctAnswers] = await db.query(
+        `SELECT q.id, q.correct_answer
+         FROM questions q
+         JOIN room_questions rq ON q.id = rq.question_id
+         WHERE rq.room_id = ?`,
+        [roomId]
+    );
+
+    return correctAnswers.reduce((total, question) => {
+        return total + (answers[question.id] === question.correct_answer ? 1 : 0);
+    }, 0);
+}
+
 const roomController = {
-    // API Tạo phòng thi đấu mới (Phiên bản Ai Là Triệu Phú - 15 Mức độ)
     createRoom: async (req, res) => {
         try {
-            const { userId } = req.body; 
+            const { userId } = req.body;
+            const roomCode = await createUniqueRoomCode();
+            const questionIds = await pickQuestionIds();
 
-            // 1. Sinh mã phòng ngẫu nhiên 6 chữ số
-            const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-            // 2. Lưu phòng mới vào bảng Rooms
             const [roomResult] = await db.query(
-                'INSERT INTO Rooms (room_code, created_by) VALUES (?, ?)', 
+                'INSERT INTO rooms (room_code, created_by) VALUES (?, ?)',
                 [roomCode, userId || null]
             );
-            const roomId = roomResult.insertId;
 
-            // 3. Bốc 15 câu hỏi (từ mức 1 đến mức 15)
-            const selectedQuestions = [];
-            for (let level = 1; level <= 15; level++) {
-                // Lấy ngẫu nhiên 1 câu có độ khó = level hiện tại
-                const [q] = await db.query(
-                    'SELECT id FROM Questions WHERE difficulty = ? ORDER BY RAND() LIMIT 1', 
-                    [level]
-                );
-                
-                if (q.length > 0) {
-                    selectedQuestions.push(q[0].id);
-                } else {
-                    // Nếu DB thiếu câu hỏi ở một mức độ nào đó, trả về lỗi ngay
-                    return res.status(400).json({ 
-                        message: `Ngân hàng câu hỏi không có câu nào ở mức độ khó ${level}. Vui lòng thêm dữ liệu!` 
-                    });
-                }
-            }
-
-            // 4. Nối 15 câu hỏi đã sắp xếp này vào phòng (Lưu vào bảng Room_Questions)
-            for (let questionId of selectedQuestions) {
+            for (const questionId of questionIds) {
                 await db.query(
-                    'INSERT INTO Room_Questions (room_id, question_id) VALUES (?, ?)', 
-                    [roomId, questionId]
+                    'INSERT INTO room_questions (room_id, question_id) VALUES (?, ?)',
+                    [roomResult.insertId, questionId]
                 );
             }
 
-            res.status(201).json({ 
-                message: 'Tạo phòng thành công! Các câu hỏi đã được xếp từ dễ đến khó.', 
-                roomCode: roomCode,
-                questionCount: selectedQuestions.length
+            return res.status(201).json({
+                message: 'Tạo phòng thành công! Các câu hỏi đã được xếp từ dễ đến khó.',
+                roomCode,
+                questionCount: questionIds.length
             });
-
         } catch (error) {
+            const status = error.message.includes('Ngân hàng câu hỏi') ? 400 : 500;
             console.error(error);
-            res.status(500).json({ message: 'Lỗi server!' });
+            return res.status(status).json({ message: error.message });
         }
     },
-    // API Lấy danh sách câu hỏi của một phòng cụ thể
+
     getRoomQuestions: async (req, res) => {
         try {
-            const { roomCode } = req.params; // Lấy mã phòng từ đường dẫn URL
+            const { roomCode } = req.params;
+            const room = await findRoomByCode(roomCode);
 
-            // 1. Kiểm tra xem mã phòng này có tồn tại trong Database không
-            const [rooms] = await db.query('SELECT id, status FROM Rooms WHERE room_code = ?', [roomCode]);
-            
-            if (rooms.length === 0) {
+            if (!room) {
                 return res.status(404).json({ message: 'Không tìm thấy phòng chơi này!' });
             }
-            
-            const roomId = rooms[0].id;
 
-            // 2. Lấy 15 câu hỏi thuộc về phòng này (Sử dụng JOIN 2 bảng)
-            // Lưu ý: Cố tình KHÔNG SELECT cột correct_answer để chống gian lận
-            const query = `
-                SELECT q.id, q.content, q.option_A, q.option_B, q.option_C, q.option_D, q.difficulty
-                FROM Questions q
-                JOIN Room_Questions rq ON q.id = rq.question_id
-                WHERE rq.room_id = ?
-                ORDER BY q.difficulty ASC
-            `;
-            
-            const [questions] = await db.query(query, [roomId]);
-
-            res.status(200).json({
-                message: 'Lấy danh sách câu hỏi thành công!',
-                roomCode: roomCode,
-                status: rooms[0].status,
-                totalQuestions: questions.length,
-                questions: questions // Trả về mảng 15 câu hỏi
-            });
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server!' });
-        }
-    },
-    // API Nộp điểm sau khi người chơi hoàn thành bộ câu hỏi
-    submitScore: async (req, res) => {
-        try {
-            const { roomCode } = req.params; // Lấy mã phòng từ URL
-            const { userId, correctCount } = req.body; // Lấy ID người chơi và số câu đúng từ Body gửi lên
-
-            // 1. Kiểm tra xem mã phòng này có tồn tại không và lấy ra ID của phòng
-            const [rooms] = await db.query('SELECT id FROM Rooms WHERE room_code = ?', [roomCode]);
-            
-            if (rooms.length === 0) {
-                return res.status(404).json({ message: 'Không tìm thấy phòng chơi này!' });
-            }
-            
-            const roomId = rooms[0].id;
-
-            // 2. Lưu điểm vào bảng Leaderboard
-            // Dùng ON DUPLICATE KEY UPDATE: Nếu người chơi này đã có điểm trong phòng rồi thì cập nhật điểm mới
-            await db.query(
-                `INSERT INTO Leaderboard (room_id, user_id, correct_count) 
-                 VALUES (?, ?, ?) 
-                 ON DUPLICATE KEY UPDATE correct_count = ?`,
-                [roomId, userId, correctCount, correctCount]
+            const [questions] = await db.query(
+                `SELECT q.id, q.content, q.option_A, q.option_B, q.option_C, q.option_D, q.difficulty
+                 FROM questions q
+                 JOIN room_questions rq ON q.id = rq.question_id
+                 WHERE rq.room_id = ?
+                 ORDER BY q.difficulty ASC`,
+                [room.id]
             );
 
-            res.status(200).json({
-                message: 'Nộp điểm thành công!',
-                roomCode: roomCode,
-                userId: userId,
-                correctCount: correctCount
+            return res.status(200).json({
+                message: 'Lấy danh sách câu hỏi thành công!',
+                roomCode,
+                status: room.status,
+                totalQuestions: questions.length,
+                questions
             });
-
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server khi nộp điểm!' });
+            return sendServerError(res, error);
         }
     },
+
+    submitScore: async (req, res) => {
+        try {
+            const { roomCode } = req.params;
+            const { userId, answers, correctCount } = req.body;
+            const room = await findRoomByCode(roomCode);
+
+            if (!room) {
+                return res.status(404).json({ message: 'Không tìm thấy phòng chơi này!' });
+            }
+
+            const hasAnswers = answers && typeof answers === 'object' && !Array.isArray(answers);
+            const verifiedCorrectCount = hasAnswers
+                ? await countCorrectAnswers(room.id, answers)
+                : correctCount;
+
+            if (!Number.isInteger(verifiedCorrectCount) || verifiedCorrectCount < 0) {
+                return res.status(400).json({ message: 'Dữ liệu đáp án không hợp lệ!' });
+            }
+
+            await db.query(
+                `INSERT INTO leaderboard (room_id, user_id, correct_count)
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE correct_count = ?`,
+                [room.id, userId, verifiedCorrectCount, verifiedCorrectCount]
+            );
+
+            return res.status(200).json({
+                message: 'Nộp điểm thành công!',
+                roomCode,
+                userId,
+                correctCount: verifiedCorrectCount
+            });
+        } catch (error) {
+            return sendServerError(res, error, 'Lỗi server khi nộp điểm!');
+        }
+    },
+
     getLeaderboard: async (req, res) => {
         try {
             const { roomCode } = req.params;
+            const room = await findRoomByCode(roomCode);
 
-            const [rooms] = await db.query('SELECT id FROM Rooms WHERE room_code = ?', [roomCode]);
-            if (rooms.length === 0) return res.status(404).json({ message: 'Không tìm thấy phòng chơi!' });
-            const roomId = rooms[0].id;
+            if (!room) {
+                return res.status(404).json({ message: 'Không tìm thấy phòng chơi!' });
+            }
 
-            // Kết nối bảng Leaderboard và Users để lấy tên người chơi, sắp xếp điểm từ cao xuống thấp
-            const query = `
-                SELECT u.username, l.correct_count 
-                FROM Leaderboard l 
-                JOIN Users u ON l.user_id = u.id 
-                WHERE l.room_id = ? 
-                ORDER BY l.correct_count DESC 
-                LIMIT 10
-            `;
-            const [leaderboard] = await db.query(query, [roomId]);
+            const [leaderboard] = await db.query(
+                `SELECT u.username, l.correct_count
+                 FROM leaderboard l
+                 JOIN users u ON l.user_id = u.id
+                 WHERE l.room_id = ?
+                 ORDER BY l.correct_count DESC
+                 LIMIT 10`,
+                [room.id]
+            );
 
-            res.status(200).json({ message: 'Thành công', leaderboard });
+            return res.status(200).json({ message: 'Thành công', leaderboard });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server!' });
+            return sendServerError(res, error);
         }
     },
 
-    // API 2: Gửi Bình luận & Đánh giá (Đúng chuẩn yêu cầu BTL)
     addComment: async (req, res) => {
         try {
             const { roomCode } = req.params;
             const { name, email, content, rating } = req.body;
+            const cleanRating = Number(rating);
 
-            const [rooms] = await db.query('SELECT id FROM Rooms WHERE room_code = ?', [roomCode]);
-            if (rooms.length === 0) return res.status(404).json({ message: 'Không tìm thấy phòng chơi!' });
-            const roomId = rooms[0].id;
+            if (!name?.trim() || !email?.trim() || !content?.trim()) {
+                return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin đánh giá!' });
+            }
 
-            // Lưu bình luận vào Database
-            await db.query(
-                'INSERT INTO Comments (room_id, name, email, content, rating) VALUES (?, ?, ?, ?, ?)',
-                [roomId, name, email, content, rating]
-            );
+            if (!Number.isInteger(cleanRating) || cleanRating < 1 || cleanRating > 5) {
+                return res.status(400).json({ message: 'Điểm đánh giá phải từ 1 đến 5.' });
+            }
 
-            res.status(201).json({ message: 'Cảm ơn bạn đã đánh giá!' });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server khi gửi bình luận!' });
-        }
-    },
+            const room = await findRoomByCode(roomCode);
 
-    // API 3: Lấy danh sách Bình luận để hiển thị công khai
-    getComments: async (req, res) => {
-        try {
-            const { roomCode } = req.params;
-
-            const [rooms] = await db.query('SELECT id FROM Rooms WHERE room_code = ?', [roomCode]);
-            if (rooms.length === 0) return res.status(404).json({ message: 'Không tìm thấy phòng chơi!' });
-            const roomId = rooms[0].id;
-
-            // Lấy bình luận mới nhất xếp lên đầu
-            const [comments] = await db.query(
-                'SELECT name, content, rating, created_at FROM Comments WHERE room_id = ? ORDER BY created_at DESC',
-                [roomId]
-            );
-
-            res.status(200).json({ comments });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server!' });
-        }
-    },
-    sendContact: async (req, res) => {
-        try {
-            const { name, email, content } = req.body;
-            if (!name || !email || !content) {
-                return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin!' });
+            if (!room) {
+                return res.status(404).json({ message: 'Không tìm thấy phòng chơi!' });
             }
 
             await db.query(
-                'INSERT INTO Contacts (name, email, content) VALUES (?, ?, ?)',
-                [name, email, content]
+                'INSERT INTO comments (room_id, name, email, content, rating) VALUES (?, ?, ?, ?, ?)',
+                [room.id, name.trim(), email.trim(), content.trim(), cleanRating]
             );
 
-            res.status(201).json({ message: 'Gửi góp ý thành công! Cảm ơn bạn.' });
+            return res.status(201).json({ message: 'Cảm ơn bạn đã đánh giá!' });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server khi gửi liên hệ!' });
+            return sendServerError(res, error, 'Lỗi server khi gửi bình luận!');
         }
     },
-    getContacts: async (req, res) => {
+
+    getComments: async (req, res) => {
         try {
-            // Sau này nếu có làm phân quyền chặt chẽ thì check admin ở đây, hiện tại cứ lấy ra trước
-            const [contacts] = await db.query('SELECT * FROM Contacts ORDER BY created_at DESC');
-            res.status(200).json({ contacts });
+            const { roomCode } = req.params;
+            const room = await findRoomByCode(roomCode);
+
+            if (!room) {
+                return res.status(404).json({ message: 'Không tìm thấy phòng chơi!' });
+            }
+
+            const [comments] = await db.query(
+                'SELECT name, content, rating, created_at FROM comments WHERE room_id = ? ORDER BY created_at DESC',
+                [room.id]
+            );
+
+            return res.status(200).json({ comments });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Lỗi server khi lấy danh sách liên hệ!' });
+            return sendServerError(res, error);
         }
     }
 };

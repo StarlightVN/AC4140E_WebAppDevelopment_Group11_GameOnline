@@ -1,4 +1,4 @@
-import type { CommentItem, LeaderboardItem, Question } from './types';
+import type { CommentItem, LeaderboardItem, Question, RoomQuestionsResponse } from './types';
 
 export const demoQuestions: Question[] = [
   {
@@ -153,3 +153,13 @@ export const demoComments: CommentItem[] = [
     created_at: new Date().toISOString(),
   },
 ];
+
+export function createDemoRoom(roomCode: string): RoomQuestionsResponse {
+  return {
+    message: 'Demo',
+    roomCode,
+    status: 'open',
+    totalQuestions: demoQuestions.length,
+    questions: demoQuestions,
+  };
+}

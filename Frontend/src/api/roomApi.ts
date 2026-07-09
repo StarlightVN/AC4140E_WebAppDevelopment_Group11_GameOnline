@@ -1,9 +1,11 @@
 import { apiRequest } from './client';
 import type {
+  AnswerKey,
   CommentItem,
   CreateRoomResponse,
   LeaderboardItem,
   RoomQuestionsResponse,
+  SubmitScoreResponse,
 } from '../types';
 
 export function createRoom(userId: number) {
@@ -17,14 +19,15 @@ export function getRoomQuestions(roomCode: string) {
   return apiRequest<RoomQuestionsResponse>(`/room/${roomCode}`);
 }
 
-export function submitScore(roomCode: string, userId: number, correctCount: number) {
-  return apiRequest<{ message: string; roomCode: string; userId: number; correctCount: number }>(
-    `/room/${roomCode}/submit`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ userId, correctCount }),
-    },
-  );
+export function submitScore(
+  roomCode: string,
+  userId: number,
+  answers: Record<number, AnswerKey>,
+) {
+  return apiRequest<SubmitScoreResponse>(`/room/${roomCode}/submit`, {
+    method: 'POST',
+    body: JSON.stringify({ userId, answers }),
+  });
 }
 
 export function getLeaderboard(roomCode: string) {

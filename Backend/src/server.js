@@ -1,24 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const db = require('./config/db'); // Gọi file kết nối DB chạy lên
+require('./config/db');
 
 const app = express();
 
-// Middleware
-app.use(cors()); // Cho phép Web và App gọi API không bị chặn
-app.use(express.json()); // Cho phép server đọc được dữ liệu dạng JSON
-// Cấu hình các API routes
-app.use('/api/auth', require('./routes/authRoutes')); // API quản lý đăng ký và đăng nhập
-app.use('/api/room', require('./routes/roomRoutes')); // API quản lý phòng thi đấu
+app.use(cors());
+app.use(express.json());
 
-// Viết một API Test thử xem server có hoạt động không
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/room', require('./routes/roomRoutes'));
+app.use('/api/feedback', require('./routes/feedbackRoutes'));
+
 app.get('/', (req, res) => {
-    res.send(' Chào mừng đến với API của Cổng Game Trắc Nghiệm!');
+    res.send('Chào mừng đến với API của Quiz Arena!');
 });
 
-// Khởi động server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(` Server đang chạy tại http://localhost:${PORT}`);
+    console.log(`Server đang chạy tại http://localhost:${PORT}`);
 });

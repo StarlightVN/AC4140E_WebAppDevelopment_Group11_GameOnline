@@ -198,6 +198,34 @@ const roomController = {
             console.error(error);
             res.status(500).json({ message: 'Lỗi server!' });
         }
+    },
+    sendContact: async (req, res) => {
+        try {
+            const { name, email, content } = req.body;
+            if (!name || !email || !content) {
+                return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin!' });
+            }
+
+            await db.query(
+                'INSERT INTO Contacts (name, email, content) VALUES (?, ?, ?)',
+                [name, email, content]
+            );
+
+            res.status(201).json({ message: 'Gửi góp ý thành công! Cảm ơn bạn.' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Lỗi server khi gửi liên hệ!' });
+        }
+    },
+    getContacts: async (req, res) => {
+        try {
+            // Sau này nếu có làm phân quyền chặt chẽ thì check admin ở đây, hiện tại cứ lấy ra trước
+            const [contacts] = await db.query('SELECT * FROM Contacts ORDER BY created_at DESC');
+            res.status(200).json({ contacts });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Lỗi server khi lấy danh sách liên hệ!' });
+        }
     }
 };
 

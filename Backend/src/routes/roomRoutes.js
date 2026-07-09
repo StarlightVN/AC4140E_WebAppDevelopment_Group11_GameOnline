@@ -22,4 +22,10 @@ router.post('/:roomCode/comments', roomController.addComment);
 // Đường dẫn lấy danh sách Bình luận (GET)
 router.get('/:roomCode/comments', roomController.getComments);
 
+// Đường dẫn gửi liên hệ (Mọi user đều gửi được)
+router.post('/contacts/send', roomController.sendContact);
+
+// Đường dẫn lấy danh sách liên hệ (Chỉ Admin xem)
+router.get('/contacts/all', roomController.getContacts);
+
 module.exports = router;

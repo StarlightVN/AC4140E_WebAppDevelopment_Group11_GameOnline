@@ -30,7 +30,7 @@ import arenaArt from './assets/quiz-arena.svg';
 import { demoComments, demoLeaderboard, demoQuestions } from './demoData';
 import type { AnswerKey, CommentItem, LeaderboardItem, Question, User } from './types';
 
-type Phase = 'home' | 'lobby' | 'game' | 'results';
+type Phase = 'home' | 'lobby' | 'game' | 'results' | 'admin' | 'contact';
 
 type AuthSession = {
   token: string;
@@ -91,6 +91,7 @@ export default function App() {
   const [rating, setRating] = useState(5);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [showAd, setShowAd] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const answeredCount = Object.keys(answers).length;
@@ -98,6 +99,22 @@ export default function App() {
   const progressPercent = questions.length ? (questionNumber / questions.length) * 100 : 0;
   const timerPercent = (timeLeft / QUESTION_SECONDS) * 100;
   const isDemoSession = session?.token === DEMO_TOKEN;
+
+  useEffect(() => {
+    const hasClosedAd = document.cookie.split('; ').find(row => row.startsWith('adClosed='));
+    if (!hasClosedAd) {
+      const timer = setTimeout(() => {
+        if (phase === 'home') {
+          setShowAd(true);
+          }
+        }, 60000);
+      return () => clearTimeout(timer);
+      }
+    }, [phase]);
+    const handleCloseAd = () => {
+      setShowAd(false);
+      document.cookie = "adClosed=true; max-age=86400; path=/";
+  };
 
   const seats = useMemo(() => {
     if (!session) {
@@ -505,14 +522,40 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <button className="brand-button" type="button" onClick={() => setPhase('home')}>
-          <ShieldCheck size={22} />
-          <span>Quiz Arena</span>
-        </button>
+        {/* Cụm Logo và Menu điều hướng bên trái */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Nút Logo / Trang chủ hiện tại của bạn */}
+          <button className="brand-button" type="button" onClick={() => setPhase('home')}>
+            <Crown size={22} color="var(--gold)" />
+            <span>Quiz Arena</span>
+          </button>
+
+          <button 
+            className="brand-button" 
+            type="button"
+            onClick={() => setPhase('contact')}
+            style={{ background: 'transparent', border: '1px solid var(--line)' }}
+          >
+            <MessageSquare size={20} /> 
+            <span className="hide-mobile">Liên hệ</span>
+          </button>
+
+          {session.user.role === 'admin' && (
+            <button 
+              className="brand-button" 
+              type="button"
+              onClick={() => setPhase('admin')}
+              style={{ background: 'var(--red)', color: 'white', border: 'none' }}
+            >
+              <ShieldCheck size={18} /> 
+              <span className="hide-mobile">Admin</span>
+            </button>
+          )}
+        </div>
 
         <div className="topbar-actions">
           <span className="user-pill">
-            <Crown size={16} />
+            <UserPlus size={16} />
             {session.user.username}
           </span>
           <button className="icon-button" type="button" onClick={logout} aria-label="Đăng xuất">
@@ -791,6 +834,119 @@ export default function App() {
           </article>
         </section>
       ) : null}
+      {/* ================= GIAO DIỆN TRANG LIÊN HỆ ================= */}
+      {phase === 'contact' && (
+        <section className="arena-panel" style={{ maxWidth: '600px', margin: '40px auto' }}>
+          <h2 style={{ color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <MessageSquare /> Liên hệ & Góp ý
+          </h2>
+          <p style={{ color: 'var(--muted)' }}>
+            Dự án Cổng Game Trắc Nghiệm Đối Đầu.<br/>
+            Thực hiện bởi: <strong>Nhóm 11 - Web App Development</strong>
+          </p>
+          
+          <form 
+            style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}
+            onSubmit={(e) => { 
+              e.preventDefault(); 
+              alert('Cảm ơn bạn! Ý kiến của bạn đã được gửi tới Ban Quản Trị.'); 
+              setPhase('home'); 
+            }}
+          >
+            <input type="text" placeholder="Họ và tên của bạn" required />
+            <input type="email" placeholder="Email liên hệ" required />
+            <textarea placeholder="Nhập nội dung ý kiến, báo lỗi hoặc góp ý..." rows={5} required />
+            <button className="primary-action" type="submit">
+              <Send size={18} /> Gửi Ý Kiến
+            </button>
+          </form>
+        </section>
+      )}
+
+      {showAd && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--panel)', padding: '30px', borderRadius: '16px',
+            border: '2px solid var(--gold)', maxWidth: '400px', textAlign: 'center',
+            boxShadow: 'var(--shadow)', margin: '20px'
+          }}>
+            <h2 style={{ color: 'var(--gold)', marginTop: 0, fontSize: '24px' }}>Ưu Đãi Đặc Biệt!</h2>
+            <p style={{ color: 'var(--text)', lineHeight: '1.5', marginBottom: '24px' }}>Nâng cấp tài khoản VIP ngay hôm nay để mở khóa toàn bộ gói câu hỏi cực khó và nhận X2 điểm thưởng trên Bảng Xếp Hạng!</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                className="primary-action" 
+                onClick={() => alert('Tính năng thanh toán đang phát triển!')}
+              >Mua VIP Ngay
+              </button>
+              <button 
+                className="secondary-action" 
+                onClick={handleCloseAd}
+                style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)' }}
+              >
+                Không, cảm ơn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+            {phase === 'admin' && (
+        <section className="arena-panel" style={{ margin: '40px auto', maxWidth: '800px' }}>
+          <h2 style={{ color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ShieldCheck /> Bảng Điều Khiển Quản Trị Viên
+          </h2>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '20px' }}>
+            {/* Box Thống kê View */}
+            <div style={{ background: 'var(--panel-strong)', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: 'var(--muted)' }}>Tổng lượt truy cập web</h3>
+              <div style={{ fontSize: '36px', fontWeight: 'bold', color: 'var(--gold)' }}>
+                1,245 <span style={{ fontSize: '16px', color: 'var(--text)' }}>views</span>
+              </div>
+            </div>
+
+            <div style={{ background: 'var(--panel-strong)', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: 'var(--muted)' }}>Ngân hàng câu hỏi</h3>
+              <div style={{ fontSize: '36px', fontWeight: 'bold', color: 'var(--text)' }}>
+                15 <span style={{ fontSize: '16px' }}>câu</span>
+              </div>
+              <button 
+                className="secondary-action" 
+                style={{ width: '100%', marginTop: '10px' }}
+                onClick={() => alert('Tính năng Thêm/Sửa câu hỏi đang được kết nối API')}
+              >
+                + Cập nhật câu hỏi
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '30px' }}>
+            <h3 style={{ color: 'var(--gold)' }}>Quản lý Bình luận người dùng</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ background: 'var(--panel-strong)', padding: '15px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Nguyễn Văn A</strong> <span style={{ color: 'var(--muted)', fontSize: '12px' }}>- 5 sao</span>
+                  <p style={{ margin: '5px 0 0 0' }}>Bộ câu hỏi rất hay, web chạy mượt!</p>
+                </div>
+                <button 
+                  style={{ background: 'var(--red)', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer' }}
+                  onClick={(e) => {
+                    const btn = e.target as HTMLButtonElement;
+                    btn.parentElement!.style.display = 'none';
+                    alert('Đã xóa bình luận thành công!');
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

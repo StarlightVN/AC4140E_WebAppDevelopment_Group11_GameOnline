@@ -234,6 +234,29 @@ const roomController = {
         } catch (error) {
             return sendServerError(res, error);
         }
+    },
+    
+    getAllCommentsAdmin: async (req, res) => {
+        try {
+            const [comments] = await db.query(
+                'SELECT id, name AS author, rating, content, created_at FROM comments ORDER BY created_at DESC'
+            );
+            return res.json({ comments });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Lỗi server khi lấy bình luận!' });
+        }
+    },
+
+    deleteCommentAdmin: async (req, res) => {
+        try {
+            const { id } = req.params;
+            await db.query('DELETE FROM comments WHERE id = ?', [id]);
+            return res.json({ message: 'Xóa bình luận thành công!' });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Lỗi server khi xóa bình luận!' });
+        }
     }
 };
 

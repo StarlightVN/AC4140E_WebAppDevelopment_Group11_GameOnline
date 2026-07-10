@@ -11,5 +11,7 @@ router.post('/:roomCode/comments', roomController.addComment);
 router.get('/:roomCode/comments', roomController.getComments);
 
 router.get('/:roomCode', roomController.getRoomQuestions);
+router.get('/admin/comments/all', roomController.getAllCommentsAdmin);
+router.delete('/admin/comments/:id', roomController.deleteCommentAdmin);
 
 module.exports = router;

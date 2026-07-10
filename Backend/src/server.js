@@ -11,6 +11,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/room', require('./routes/roomRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
+app.use('/api/stats', require('./routes/statsRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Chào mừng đến với API của Quiz Arena!');

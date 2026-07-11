@@ -1,7 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
+import { screenHeaderStyles as styles } from '@/src/styles';
 import { colors } from '@/src/theme';
 
 type Props = {
@@ -38,32 +39,3 @@ export function ScreenHeader({ title, subtitle, back = false, right }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    minHeight: 58,
-  },
-  iconButton: {
-    alignItems: 'center',
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  copy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  title: {
-    color: colors.ink,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: 13,
-    marginTop: 2,
-  },
-});

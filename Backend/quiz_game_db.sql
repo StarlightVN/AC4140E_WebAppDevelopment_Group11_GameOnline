@@ -177,6 +177,25 @@ INSERT INTO `rooms` VALUES (1,'577894',1,'open','2026-04-23 12:12:10'),(2,'99664
 UNLOCK TABLES;
 
 --
+-- Table structure for table `system_stats`
+--
+
+DROP TABLE IF EXISTS `system_stats`;
+CREATE TABLE `system_stats` (
+  `id` tinyint unsigned NOT NULL,
+  `view_count` bigint unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `system_stats`
+--
+
+LOCK TABLES `system_stats` WRITE;
+INSERT INTO `system_stats` VALUES (1,0);
+UNLOCK TABLES;
+
+--
 -- Table structure for table `users`
 --
 

@@ -5,25 +5,34 @@ import {
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/AppButton';
 import { createRoom } from '@/src/api/rooms';
 import { useSession } from '@/src/context/SessionContext';
-import { colors, radius, spacing } from '@/src/theme';
+import { homeStyles as styles } from '@/src/styles';
+import { colors, spacing } from '@/src/theme';
+
+const BANNER_ASPECT_RATIO = 2.05;
 
 export default function HomeScreen() {
   const router = useRouter();
   const { session, signOut } = useSession();
+  const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [roomCode, setRoomCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const activeSession = session;
+  const bannerWidth = Math.max(
+    0,
+    windowWidth - insets.left - insets.right - spacing.md * 2,
+  );
 
   if (!activeSession) {
     router.replace('/auth');
@@ -80,7 +89,13 @@ export default function HomeScreen() {
           accessibilityLabel="Đấu trường câu hỏi"
           resizeMode="cover"
           source={require('@/assets/images/quiz-arena-banner.png')}
-          style={styles.banner}
+          style={[
+            styles.banner,
+            {
+              height: Math.round(bannerWidth / BANNER_ASPECT_RATIO),
+              width: bannerWidth,
+            },
+          ]}
         />
 
         <View style={styles.quickStats}>
@@ -149,137 +164,3 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  content: {
-    gap: spacing.lg,
-    marginHorizontal: 'auto',
-    maxWidth: 720,
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-    width: '100%',
-  },
-  topbar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  eyebrow: {
-    color: colors.red,
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  greeting: {
-    color: colors.ink,
-    fontSize: 23,
-    fontWeight: '900',
-    marginTop: 3,
-  },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    height: 46,
-    justifyContent: 'center',
-    width: 46,
-  },
-  banner: {
-    aspectRatio: 2.05,
-    borderRadius: radius.md,
-    width: '100%',
-  },
-  quickStats: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-  },
-  stat: {
-    alignItems: 'center',
-    flex: 1,
-    minWidth: 0,
-    paddingHorizontal: 6,
-    paddingVertical: 14,
-  },
-  statValue: {
-    color: colors.ink,
-    fontSize: 14,
-    fontWeight: '900',
-    marginTop: 6,
-  },
-  statLabel: {
-    color: colors.muted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  section: {
-    gap: 12,
-  },
-  sectionTitle: {
-    color: colors.ink,
-    fontSize: 19,
-    fontWeight: '900',
-  },
-  sectionCopy: {
-    color: colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  codeInput: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.ink,
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: 8,
-    minHeight: 62,
-    paddingHorizontal: 16,
-    textAlign: 'center',
-  },
-  error: {
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radius.sm,
-    color: colors.redDark,
-    padding: 12,
-  },
-  contactRow: {
-    alignItems: 'center',
-    borderTopColor: colors.line,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: spacing.md,
-  },
-  contactIcon: {
-    alignItems: 'center',
-    backgroundColor: colors.tealSoft,
-    borderRadius: radius.md,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  contactCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  contactTitle: {
-    color: colors.ink,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  contactText: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 3,
-  },
-});

@@ -3,7 +3,11 @@ const db = require('../config/db');
 const statsController = {
     incrementView: async (req, res) => {
         try {
-            await db.query('UPDATE system_stats SET view_count = view_count + 1 WHERE id = 1');
+            await db.query(`
+                INSERT INTO system_stats (id, view_count)
+                VALUES (1, 1)
+                ON DUPLICATE KEY UPDATE view_count = view_count + 1
+            `);
             return res.json({ message: 'Đã tăng lượt xem thành công!' });
         } catch (error) {
             console.error(error);

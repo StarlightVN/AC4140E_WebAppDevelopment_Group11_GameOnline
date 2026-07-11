@@ -3,12 +3,12 @@ import type { ComponentProps } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
   type ViewStyle,
 } from 'react-native';
 
-import { colors, radius } from '@/src/theme';
+import { appButtonStyles as styles } from '@/src/styles';
+import { colors } from '@/src/theme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -60,40 +60,3 @@ export function AppButton({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    alignItems: 'center',
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    minHeight: 50,
-    paddingHorizontal: 18,
-  },
-  primary: {
-    backgroundColor: colors.red,
-  },
-  secondary: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderWidth: 1,
-  },
-  danger: {
-    backgroundColor: colors.redDark,
-  },
-  pressed: {
-    opacity: 0.82,
-  },
-  disabled: {
-    opacity: 0.48,
-  },
-  label: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  secondaryLabel: {
-    color: colors.ink,
-  },
-});

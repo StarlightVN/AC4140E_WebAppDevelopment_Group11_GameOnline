@@ -1,6 +1,7 @@
 const db = require('../config/db');
 
 const QUESTION_COUNT = 15;
+const ANSWER_KEYS = ['A', 'B', 'C', 'D'];
 
 function sendServerError(res, error, message = 'Lỗi server!') {
     console.error(error);
@@ -60,6 +61,42 @@ async function countCorrectAnswers(roomId, answers) {
     return correctAnswers.reduce((total, question) => {
         return total + (answers[question.id] === question.correct_answer ? 1 : 0);
     }, 0);
+}
+
+function normalizeQuestionInput(body) {
+    const content = typeof body.content === 'string' ? body.content.trim() : '';
+    const optionA = typeof body.option_A === 'string' ? body.option_A.trim() : '';
+    const optionB = typeof body.option_B === 'string' ? body.option_B.trim() : '';
+    const optionC = typeof body.option_C === 'string' ? body.option_C.trim() : '';
+    const optionD = typeof body.option_D === 'string' ? body.option_D.trim() : '';
+    const correctAnswer = typeof body.correct_answer === 'string'
+        ? body.correct_answer.trim().toUpperCase()
+        : '';
+    const difficulty = Number(body.difficulty);
+
+    if (!content || !optionA || !optionB || !optionC || !optionD) {
+        return { error: 'Vui lòng nhập nội dung câu hỏi và đầy đủ 4 đáp án.' };
+    }
+
+    if (!ANSWER_KEYS.includes(correctAnswer)) {
+        return { error: 'Đáp án đúng phải là A, B, C hoặc D.' };
+    }
+
+    if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > QUESTION_COUNT) {
+        return { error: 'Độ khó phải là số nguyên từ 1 đến 15.' };
+    }
+
+    return {
+        value: {
+            content,
+            option_A: optionA,
+            option_B: optionB,
+            option_C: optionC,
+            option_D: optionD,
+            correct_answer: correctAnswer,
+            difficulty
+        }
+    };
 }
 
 const roomController = {
@@ -256,6 +293,130 @@ const roomController = {
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Lỗi server khi xóa bình luận!' });
+        }
+    },
+
+    getAllQuestionsAdmin: async (req, res) => {
+        try {
+            const [questions] = await db.query(
+                `SELECT id, content, option_A, option_B, option_C, option_D,
+                        correct_answer, difficulty
+                 FROM questions
+                 ORDER BY difficulty ASC, id ASC`
+            );
+
+            return res.json({ total: questions.length, questions });
+        } catch (error) {
+            return sendServerError(res, error, 'Lỗi server khi lấy ngân hàng câu hỏi!');
+        }
+    },
+
+    createQuestionAdmin: async (req, res) => {
+        try {
+            const normalized = normalizeQuestionInput(req.body);
+
+            if (normalized.error) {
+                return res.status(400).json({ message: normalized.error });
+            }
+
+            const question = normalized.value;
+            const [result] = await db.query(
+                `INSERT INTO questions
+                    (content, option_A, option_B, option_C, option_D, correct_answer, difficulty)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    question.content,
+                    question.option_A,
+                    question.option_B,
+                    question.option_C,
+                    question.option_D,
+                    question.correct_answer,
+                    question.difficulty
+                ]
+            );
+
+            return res.status(201).json({
+                message: 'Thêm câu hỏi thành công!',
+                question: { id: result.insertId, ...question }
+            });
+        } catch (error) {
+            return sendServerError(res, error, 'Lỗi server khi thêm câu hỏi!');
+        }
+    },
+
+    updateQuestionAdmin: async (req, res) => {
+        try {
+            const questionId = Number(req.params.id);
+            const normalized = normalizeQuestionInput(req.body);
+
+            if (!Number.isInteger(questionId) || questionId < 1) {
+                return res.status(400).json({ message: 'ID câu hỏi không hợp lệ.' });
+            }
+
+            if (normalized.error) {
+                return res.status(400).json({ message: normalized.error });
+            }
+
+            const question = normalized.value;
+            const [result] = await db.query(
+                `UPDATE questions
+                 SET content = ?, option_A = ?, option_B = ?, option_C = ?, option_D = ?,
+                     correct_answer = ?, difficulty = ?
+                 WHERE id = ?`,
+                [
+                    question.content,
+                    question.option_A,
+                    question.option_B,
+                    question.option_C,
+                    question.option_D,
+                    question.correct_answer,
+                    question.difficulty,
+                    questionId
+                ]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: 'Không tìm thấy câu hỏi.' });
+            }
+
+            return res.json({
+                message: 'Cập nhật câu hỏi thành công!',
+                question: { id: questionId, ...question }
+            });
+        } catch (error) {
+            return sendServerError(res, error, 'Lỗi server khi cập nhật câu hỏi!');
+        }
+    },
+
+    deleteQuestionAdmin: async (req, res) => {
+        const questionId = Number(req.params.id);
+
+        if (!Number.isInteger(questionId) || questionId < 1) {
+            return res.status(400).json({ message: 'ID câu hỏi không hợp lệ.' });
+        }
+
+        let connection;
+
+        try {
+            connection = await db.getConnection();
+            await connection.beginTransaction();
+            await connection.query('DELETE FROM room_questions WHERE question_id = ?', [questionId]);
+            const [result] = await connection.query('DELETE FROM questions WHERE id = ?', [questionId]);
+
+            if (result.affectedRows === 0) {
+                await connection.rollback();
+                return res.status(404).json({ message: 'Không tìm thấy câu hỏi.' });
+            }
+
+            await connection.commit();
+            return res.json({ message: 'Xóa câu hỏi thành công!' });
+        } catch (error) {
+            if (connection) {
+                await connection.rollback();
+            }
+            return sendServerError(res, error, 'Lỗi server khi xóa câu hỏi!');
+        } finally {
+            connection?.release();
         }
     }
 };

@@ -1,4 +1,11 @@
-import { DoorOpen, Users, X } from 'lucide-react';
+import {
+  CircleHelp,
+  DoorOpen,
+  PlusCircle,
+  Timer,
+  Trophy,
+  X,
+} from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -77,51 +84,74 @@ export function HomePage() {
       ) : null}
 
       <section className="home-grid">
-        <article className="command-panel">
-          <div>
-            <p className="eyebrow">Phòng chơi</p>
-            <h1>Chọn phòng để bắt đầu</h1>
-          </div>
-
-          <div className="command-row">
-            <button className="primary-action" type="button" onClick={handleCreateRoom} disabled={busy}>
-              <Users size={18} />
-              {isDemo ? 'Tạo phòng demo' : 'Tạo phòng'}
-            </button>
-
-            <form className="join-form" onSubmit={handleJoinRoom}>
-              <input
-                inputMode="numeric"
-                onChange={(event) => setRoomCode(formatRoomCode(event.target.value))}
-                placeholder="Mã phòng"
-                value={roomCode}
-              />
-              <button className="secondary-action" disabled={busy} type="submit">
-                <DoorOpen size={18} />
-                Vào
-              </button>
-            </form>
-          </div>
-        </article>
+        <header className="home-intro">
+          <p className="eyebrow">Quiz Arena</p>
+          <h1>Chào, {session?.user.username}</h1>
+          <p className="muted">Sẵn sàng cho một lượt đấu mới?</p>
+        </header>
 
         <article className="arena-card">
-          <img src={arenaArt} alt="" />
+          <img src={arenaArt} alt="Đấu trường câu hỏi Quiz Arena" />
         </article>
 
         <article className="metrics-strip">
           <div>
-            <span>Quy mô</span>
-            <strong>4-10</strong>
+            <Timer size={22} />
+            <strong>20 giây</strong>
+            <span>mỗi câu</span>
           </div>
           <div>
-            <span>Bộ câu hỏi</span>
-            <strong>15</strong>
+            <CircleHelp size={22} />
+            <strong>15 câu</strong>
+            <span>mỗi phòng</span>
           </div>
           <div>
-            <span>API</span>
-            <strong>REST</strong>
+            <Trophy size={22} />
+            <strong>Top 10</strong>
+            <span>bảng điểm</span>
           </div>
         </article>
+
+        <div className="command-panel">
+          <section className="command-section">
+            <div>
+              <h2>Mở phòng mới</h2>
+              <p className="muted">Tạo bộ 15 câu hỏi ngẫu nhiên từ ngân hàng dữ liệu.</p>
+            </div>
+            <button
+              className="primary-action wide"
+              type="button"
+              onClick={handleCreateRoom}
+              disabled={busy}
+            >
+              <PlusCircle size={19} />
+              {isDemo ? 'Tạo phòng demo' : 'Tạo phòng'}
+            </button>
+          </section>
+
+          <section className="command-section">
+            <h2>Vào bằng mã phòng</h2>
+            <form className="join-form" onSubmit={handleJoinRoom}>
+              <input
+                aria-label="Mã phòng gồm 6 chữ số"
+                inputMode="numeric"
+                maxLength={6}
+                onChange={(event) => setRoomCode(formatRoomCode(event.target.value))}
+                placeholder="Nhập 6 chữ số"
+                value={roomCode}
+              />
+              <button
+                className="secondary-action wide"
+                disabled={busy || roomCode.length !== 6}
+                type="submit"
+              >
+                <DoorOpen size={18} />
+                Vào phòng
+              </button>
+            </form>
+          </section>
+
+        </div>
       </section>
 
       {showAd ? (

@@ -7,28 +7,36 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/AppButton';
 import { FormField } from '@/components/FormField';
 import { login, register } from '@/src/api/auth';
 import { useSession } from '@/src/context/SessionContext';
-import { colors, radius, spacing } from '@/src/theme';
+import { authStyles as styles } from '@/src/styles';
+import { colors, spacing } from '@/src/theme';
 
 type Mode = 'login' | 'register';
+const BANNER_ASPECT_RATIO = 1.9;
 
 export default function AuthScreen() {
   const router = useRouter();
   const { signIn } = useSession();
+  const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<Mode>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const bannerWidth = Math.max(
+    0,
+    windowWidth - insets.left - insets.right - spacing.md * 2,
+  );
 
   async function handleSubmit() {
     const cleanUsername = username.trim();
@@ -69,7 +77,13 @@ export default function AuthScreen() {
             accessibilityLabel="Sân khấu Quiz Arena"
             resizeMode="cover"
             source={require('@/assets/images/quiz-arena-banner.png')}
-            style={styles.banner}
+            style={[
+              styles.banner,
+              {
+                height: Math.round(bannerWidth / BANNER_ASPECT_RATIO),
+                width: bannerWidth,
+              },
+            ]}
           />
 
           <View style={styles.brandRow}>
@@ -139,85 +153,3 @@ export default function AuthScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    gap: spacing.lg,
-    marginHorizontal: 'auto',
-    maxWidth: 560,
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-    width: '100%',
-  },
-  banner: {
-    aspectRatio: 1.9,
-    borderRadius: radius.md,
-    width: '100%',
-  },
-  brandRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-  },
-  brandMark: {
-    alignItems: 'center',
-    backgroundColor: colors.red,
-    borderRadius: radius.md,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
-  },
-  brand: {
-    color: colors.ink,
-    fontSize: 27,
-    fontWeight: '900',
-  },
-  tagline: {
-    color: colors.muted,
-    fontSize: 14,
-    marginTop: 2,
-  },
-  segmented: {
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    padding: 4,
-  },
-  segment: {
-    alignItems: 'center',
-    borderRadius: radius.sm,
-    flex: 1,
-    minHeight: 42,
-    justifyContent: 'center',
-  },
-  segmentActive: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderWidth: 1,
-  },
-  segmentText: {
-    color: colors.muted,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  segmentTextActive: {
-    color: colors.ink,
-  },
-  form: {
-    gap: spacing.md,
-  },
-  error: {
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radius.sm,
-    color: colors.redDark,
-    fontSize: 14,
-    padding: 12,
-  },
-});

@@ -34,6 +34,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg);
 }
 
@@ -43,6 +44,7 @@ a {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
   letter-spacing: 0;
@@ -62,6 +64,7 @@ button:disabled {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   min-height: 50px;
@@ -79,6 +82,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   border-color: var(--red);
   box-shadow: 0 0 0 3px rgba(199, 53, 47, 0.13);
@@ -100,12 +104,12 @@ p {
 
 h1 {
   line-height: 1.08;
-  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-size: 2.5rem;
 }
 
 h2 {
   line-height: 1.16;
-  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  font-size: 1.5rem;
 }
 
 .muted {
@@ -123,21 +127,22 @@ h2 {
 
 .auth-shell,
 .app-shell {
-  width: min(760px, calc(100% - 32px));
+  width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
 }
 
 .auth-shell {
   min-height: 100vh;
   display: grid;
-  align-content: center;
-  gap: 24px;
-  padding: 32px 0;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  align-items: center;
+  gap: 48px;
+  padding: 40px 0;
 }
 
 .app-shell {
   min-height: 100vh;
-  padding: 16px 0 42px;
+  padding: 18px 0 56px;
 }
 
 .auth-visual {
@@ -166,6 +171,11 @@ h2 {
 .auth-panel {
   display: grid;
   gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .room-card,
@@ -393,39 +403,56 @@ h2 {
 
 .home-grid {
   display: grid;
-  gap: 18px;
+  grid-template-areas:
+    "intro"
+    "visual"
+    "metrics"
+    "actions";
+  gap: 22px;
+}
+
+.home-intro {
+  grid-area: intro;
+  display: grid;
+  gap: 6px;
+}
+
+.home-intro h1 {
+  font-size: 2.6rem;
 }
 
 .command-panel {
-  order: 3;
+  grid-area: actions;
   display: grid;
-  gap: 18px;
+  align-content: start;
+  gap: 28px;
 }
 
-.command-panel h1 {
-  margin-top: 4px;
-  color: var(--text);
-  font-size: clamp(1.7rem, 4vw, 2.55rem);
-}
-
-.command-row {
+.command-section {
   display: grid;
-  grid-template-columns: 1fr;
   gap: 12px;
+}
+
+.command-section > div {
+  display: grid;
+  gap: 7px;
+}
+
+.command-section h2 {
+  font-size: 1.45rem;
 }
 
 .join-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
 }
 
 .arena-card {
-  order: 1;
+  grid-area: visual;
 }
 
 .metrics-strip {
-  order: 2;
+  grid-area: metrics;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   overflow: hidden;
@@ -435,7 +462,8 @@ h2 {
 }
 
 .metrics-strip div {
-  min-height: 88px;
+  min-width: 0;
+  min-height: 104px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -450,14 +478,27 @@ h2 {
 
 .metrics-strip span {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
 .metrics-strip strong {
   color: var(--text);
-  font-size: clamp(1.3rem, 5vw, 2rem);
+  font-size: 1.08rem;
   line-height: 1;
+  white-space: nowrap;
+}
+
+.metrics-strip div:nth-child(1) svg {
+  color: var(--red);
+}
+
+.metrics-strip div:nth-child(2) svg {
+  color: var(--teal);
+}
+
+.metrics-strip div:nth-child(3) svg {
+  color: var(--gold);
 }
 
 .lobby-layout,
@@ -484,7 +525,7 @@ h2 {
 
 .room-code-card h1 {
   color: var(--white);
-  font-size: clamp(3rem, 14vw, 5.4rem);
+  font-size: 4.6rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -580,7 +621,7 @@ h2 {
 .game-head h1 {
   margin-top: 6px;
   color: var(--text);
-  font-size: clamp(1.35rem, 4vw, 1.8rem);
+  font-size: 1.65rem;
   line-height: 1.35;
 }
 
@@ -738,15 +779,29 @@ h2 {
 .result-card {
   display: grid;
   justify-items: center;
-  gap: 10px;
+  align-content: center;
+  gap: 9px;
+  min-height: 330px;
+  padding: 32px;
   border: 0;
   background: var(--navy);
   color: var(--white);
   text-align: center;
 }
 
-.result-card svg {
-  color: var(--gold);
+.result-trophy {
+  width: 58px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--white);
+}
+
+.result-trophy svg {
+  color: currentColor;
 }
 
 .result-card .eyebrow,
@@ -754,14 +809,45 @@ h2 {
   color: #c6cdda;
 }
 
-.result-card h1 {
+.result-card h2 {
   color: var(--white);
-  font-size: clamp(3.4rem, 14vw, 5rem);
+  font-size: 1.55rem;
+}
+
+.result-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-score strong {
+  color: var(--white);
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+.result-score span {
+  color: #aeb8c8;
+  font-size: 2.2rem;
+  font-weight: 900;
 }
 
 .result-card .secondary-action {
   background: var(--white);
   color: var(--text);
+}
+
+.result-actions {
+  width: min(460px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.result-actions > * {
+  width: 100%;
 }
 
 .leaderboard-card,
@@ -780,10 +866,72 @@ h2 {
   color: var(--red);
 }
 
+.section-title-between {
+  justify-content: space-between;
+}
+
+.section-title-between > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title-between .icon-button {
+  width: 40px;
+  min-height: 40px;
+}
+
+.leaderboard-list {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.leaderboard-list div {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.leaderboard-list div:last-child {
+  border-bottom: 0;
+}
+
+.comment-card {
+  display: grid;
+  gap: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.feedback-section,
+.recent-comments {
+  min-width: 0;
+}
+
 .comment-form {
   display: grid;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 14px;
+}
+
+.rating-fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rating-fieldset legend {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .rating-row {
@@ -793,7 +941,9 @@ h2 {
 }
 
 .rating-row button {
-  min-height: 52px;
+  min-height: 64px;
+  flex-direction: column;
+  gap: 2px;
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--text);
@@ -804,6 +954,14 @@ h2 {
   border-color: var(--gold);
   background: var(--gold);
   color: var(--white);
+}
+
+.rating-row button:not(.active) svg {
+  color: var(--gold);
+}
+
+.rating-row button span {
+  font-size: 0.72rem;
 }
 
 .comment-list div {
@@ -830,6 +988,12 @@ h2 {
   line-height: 1.45;
 }
 
+.comment-list .empty-comments {
+  margin-top: 0;
+  padding: 30px 16px;
+  text-align: center;
+}
+
 .page-status,
 .empty-page {
   min-height: 60vh;
@@ -845,10 +1009,10 @@ h2 {
 }
 
 .content-page {
-  width: min(760px, 100%);
-  margin: 4px auto 0;
+  width: 100%;
+  margin-top: 4px;
   display: grid;
-  gap: 24px;
+  gap: 28px;
 }
 
 .page-heading {
@@ -861,13 +1025,13 @@ h2 {
   align-items: center;
   gap: 10px;
   color: var(--text);
-  font-size: clamp(1.8rem, 5vw, 2.7rem);
+  font-size: 2.2rem;
 }
 
 .contact-form {
   display: grid;
   gap: 16px;
-  padding: 20px;
+  padding: 24px;
 }
 
 .ad-overlay {
@@ -903,6 +1067,232 @@ h2 {
   border-radius: 8px;
   color: var(--muted);
   background: transparent;
+}
+
+.admin-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(23, 25, 30, 0.58);
+}
+
+.question-manager-dialog,
+.question-editor-dialog {
+  width: min(1180px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(23, 25, 30, 0.24);
+}
+
+.question-manager-dialog {
+  height: min(820px, calc(100vh - 32px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.question-editor-overlay {
+  z-index: 130;
+}
+
+.question-editor-dialog {
+  width: min(720px, 100%);
+  max-height: min(820px, calc(100vh - 32px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.admin-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-dialog-header > div {
+  display: grid;
+  gap: 5px;
+}
+
+.question-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(200px, 250px) minmax(120px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.question-control > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.question-control select {
+  min-height: 44px;
+  background: var(--surface);
+}
+
+.question-result-count {
+  align-self: center;
+  color: var(--muted);
+  text-align: right;
+}
+
+.question-result-count strong {
+  color: var(--text);
+}
+
+.question-table-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.question-table {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: collapse;
+  color: var(--text);
+}
+
+.question-table th,
+.question-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.question-table th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.question-table th:first-child,
+.question-content-cell {
+  width: 31%;
+}
+
+.question-table th:nth-child(2) {
+  width: 39%;
+}
+
+.question-content-cell {
+  display: grid;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.question-content-cell small {
+  color: var(--muted);
+}
+
+.question-option-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.question-option-list li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 7px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.question-option-list li > strong {
+  color: var(--text);
+}
+
+.question-option-list li.correct,
+.question-option-list li.correct > strong {
+  color: var(--green);
+}
+
+.correct-answer-badge,
+.difficulty-badge {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.correct-answer-badge {
+  min-width: 34px;
+  background: #e3f4ec;
+  color: var(--green);
+}
+
+.difficulty-badge {
+  background: var(--gold-soft);
+  color: #8a6417;
+  padding: 0 9px;
+}
+
+.question-row-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.question-row-actions .icon-button {
+  width: 40px;
+  min-height: 40px;
+}
+
+.question-delete-button {
+  color: var(--red-dark);
+}
+
+.question-empty {
+  padding: 36px 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.question-editor-form {
+  min-height: 0;
+  display: grid;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 20px 22px 22px;
+}
+
+.question-option-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.question-editor-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.question-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .admin-metrics {
@@ -960,30 +1350,130 @@ h2 {
   color: var(--muted);
 }
 
-@media (min-width: 900px) {
-  .app-shell {
-    width: min(920px, calc(100% - 44px));
+@media (min-width: 1201px) {
+  .home-grid {
+    grid-template-columns: minmax(0, 1.55fr) minmax(350px, 0.75fr);
+    grid-template-areas:
+      "intro actions"
+      "visual actions"
+      "metrics actions";
+    column-gap: 40px;
+    align-items: start;
   }
 
-  .game-layout,
+  .lobby-layout {
+    grid-template-columns: minmax(340px, 0.72fr) minmax(0, 1.55fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  .room-code-card {
+    position: sticky;
+    top: 18px;
+  }
+
+  .game-layout {
+    grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.65fr);
+    gap: 24px;
+    align-items: start;
+  }
+
   .results-layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1.65fr) minmax(340px, 0.85fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .comment-card {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+    align-items: start;
+  }
+
+  .content-page:not(.admin-page) {
+    grid-template-columns: minmax(260px, 0.55fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+
+  .content-page:not(.admin-page) .contact-form {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1200px) {
+  .auth-shell,
+  .app-shell {
+    width: min(1120px, calc(100% - 40px));
+  }
+
+  .auth-shell {
+    grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.8fr);
+    gap: 32px;
+    padding: 32px 0;
+  }
+
+  .home-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr);
+    grid-template-areas:
+      "intro actions"
+      "visual actions"
+      "metrics actions";
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .lobby-layout {
+    grid-template-columns: minmax(300px, 0.7fr) minmax(0, 1.3fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .room-code-card {
+    position: sticky;
+    top: 18px;
+  }
+
+  .game-layout {
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.65fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .results-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr);
+    gap: 20px;
     align-items: start;
   }
 
   .comment-card {
     grid-column: 1 / -1;
   }
+
+  .content-page:not(.admin-page) {
+    grid-template-columns: minmax(220px, 0.5fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  .content-page:not(.admin-page) .contact-form {
+    grid-column: 2;
+    grid-row: 1;
+  }
 }
 
 @media (max-width: 800px) {
   .auth-shell,
   .app-shell {
-    width: min(100% - 20px, 760px);
+    width: min(760px, calc(100% - 32px));
   }
 
   .auth-shell {
-    padding: 14px 0 28px;
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 24px;
+    padding: 24px 0 32px;
   }
 
   .topbar {
@@ -1019,35 +1509,106 @@ h2 {
     align-items: stretch;
     flex-direction: column;
   }
-}
 
-@media (max-width: 560px) {
-  .join-form,
+  h1,
+  .home-intro h1 {
+    font-size: 2rem;
+  }
+
+  .room-card,
+  .game-board,
+  .side-panel,
+  .result-card,
+  .leaderboard-card {
+    padding: 18px;
+  }
+
+  .room-code-card h1 {
+    font-size: 3.2rem;
+  }
+
   .game-head {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 64px;
+    gap: 12px;
   }
 
   .timer-ring {
-    width: 70px;
+    width: 64px;
   }
 
   .game-actions,
-  .result-actions,
   .ad-actions {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .metrics-strip {
+  .metrics-strip div {
+    min-height: 92px;
+    padding-inline: 4px;
+  }
+
+  .metrics-strip strong {
+    font-size: 0.92rem;
+  }
+
+  .rating-row {
+    gap: 4px;
+  }
+
+  .rating-row button {
+    min-height: 60px;
+  }
+
+  .result-card {
+    min-height: 300px;
+    padding: 24px 18px;
+  }
+
+  .result-score strong {
+    font-size: 3.9rem;
+  }
+
+  .comment-card {
+    gap: 34px;
+  }
+
+  .admin-dialog-overlay {
+    padding: 8px;
+  }
+
+  .question-manager-dialog {
+    height: calc(100vh - 16px);
+  }
+
+  .question-editor-dialog {
+    max-height: calc(100vh - 16px);
+  }
+
+  .admin-dialog-header {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .question-toolbar {
+    grid-template-columns: 1fr;
+    padding: 12px 16px;
+  }
+
+  .question-result-count {
+    text-align: left;
+  }
+
+  .question-editor-form {
+    padding: 16px;
+  }
+
+  .question-option-editor-grid,
+  .question-editor-meta {
     grid-template-columns: 1fr;
   }
 
-  .metrics-strip div {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .metrics-strip div:last-child {
-    border-bottom: 0;
+  .question-editor-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }

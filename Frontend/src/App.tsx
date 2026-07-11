@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import { incrementViewCount } from './api/statsApi';
 import { AppLayout } from './components/AppLayout';
 import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
@@ -11,8 +13,21 @@ import { HomePage } from './pages/HomePage';
 import { ResultsPage } from './pages/ResultsPage';
 import { RoomPage } from './pages/RoomPage';
 
+const VIEW_COUNTED_SESSION_KEY = 'quiz-arena-view-counted';
+
 export default function App() {
   const { session } = useAuth();
+
+  useEffect(() => {
+    if (sessionStorage.getItem(VIEW_COUNTED_SESSION_KEY)) {
+      return;
+    }
+
+    sessionStorage.setItem(VIEW_COUNTED_SESSION_KEY, 'true');
+    incrementViewCount().catch(() => {
+      sessionStorage.removeItem(VIEW_COUNTED_SESSION_KEY);
+    });
+  }, []);
 
   return (
     <Routes>

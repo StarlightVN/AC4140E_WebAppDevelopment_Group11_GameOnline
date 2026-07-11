@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -15,7 +14,7 @@ import { FormField } from '@/components/FormField';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { submitFeedback } from '@/src/api/feedback';
 import { useSession } from '@/src/context/SessionContext';
-import { colors, radius, spacing } from '@/src/theme';
+import { contactStyles as styles } from '@/src/styles';
 
 export default function ContactScreen() {
   const { session } = useSession();
@@ -97,47 +96,3 @@ export default function ContactScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    gap: spacing.lg,
-    marginHorizontal: 'auto',
-    maxWidth: 640,
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-    width: '100%',
-  },
-  about: {
-    backgroundColor: colors.tealSoft,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  aboutTitle: {
-    color: colors.ink,
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  aboutCopy: {
-    color: colors.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 8,
-  },
-  form: {
-    gap: spacing.md,
-  },
-  error: {
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radius.sm,
-    color: colors.redDark,
-    fontSize: 14,
-    padding: 12,
-  },
-});

@@ -1,5 +1,6 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
+import { loadingViewStyles as styles } from '@/src/styles';
 import { colors } from '@/src/theme';
 
 export function LoadingView({ label = 'Đang tải...' }: { label?: string }) {
@@ -10,17 +11,3 @@ export function LoadingView({ label = 'Đang tải...' }: { label?: string }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  label: {
-    color: colors.muted,
-    fontSize: 15,
-  },
-});

@@ -1,4 +1,12 @@
-import { MessageSquare, RotateCcw, Send, Trophy } from 'lucide-react';
+import {
+  Home,
+  MessageSquare,
+  RefreshCw,
+  RotateCcw,
+  Send,
+  Star,
+  Trophy,
+} from 'lucide-react';
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -118,18 +126,18 @@ export function ResultsPage() {
 
       <section className="results-layout">
         <article className="result-card">
-          <Trophy size={36} />
-          <p className="eyebrow">Kết quả phòng {roomCode}</p>
-          <h1>
-            {displayedScore}/{total}
-          </h1>
+          <span className="result-trophy" aria-hidden="true">
+            <Trophy size={32} />
+          </span>
+          <p className="eyebrow">Hoàn thành phòng {roomCode}</p>
+          <h2>Kết quả của bạn</h2>
+          <p className="result-score">
+            <strong>{displayedScore}</strong>
+            <span>/{total}</span>
+          </p>
           <p className="muted">{scoreLabel}</p>
 
           <div className="result-actions">
-            <button className="primary-action" type="button" onClick={loadResults} disabled={busy}>
-              <Trophy size={18} />
-              Cập nhật BXH
-            </button>
             <button
               className="secondary-action"
               type="button"
@@ -138,13 +146,29 @@ export function ResultsPage() {
               <RotateCcw size={18} />
               Chơi lại
             </button>
+            <button className="primary-action" type="button" onClick={() => navigate('/')}>
+              <Home size={18} />
+              Trang chủ
+            </button>
           </div>
         </article>
 
         <article className="leaderboard-card">
-          <div className="section-title">
-            <Trophy size={20} />
-            <h2>Bảng xếp hạng</h2>
+          <div className="section-title section-title-between">
+            <span>
+              <Trophy size={20} />
+              <h2>Bảng xếp hạng</h2>
+            </span>
+            <button
+              aria-label="Cập nhật bảng xếp hạng"
+              className="icon-button"
+              disabled={busy}
+              onClick={loadResults}
+              title="Cập nhật bảng xếp hạng"
+              type="button"
+            >
+              <RefreshCw size={18} />
+            </button>
           </div>
           <div className="leaderboard-list">
             {leaderboard.length ? (
@@ -162,51 +186,72 @@ export function ResultsPage() {
         </article>
 
         <article className="comment-card">
-          <div className="section-title">
-            <MessageSquare size={20} />
-            <h2>Đánh giá phòng</h2>
-          </div>
-
-          <form className="comment-form" onSubmit={handleCommentSubmit}>
-            <input
-              onChange={(event) => setCommentEmail(event.target.value)}
-              placeholder="Email"
-              type="email"
-              value={commentEmail}
-            />
-            <div className="rating-row">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  className={rating === value ? 'active' : ''}
-                  key={value}
-                  type="button"
-                  onClick={() => setRating(value)}
-                >
-                  {value}
-                </button>
-              ))}
+          <section className="feedback-section">
+            <div className="section-title">
+              <MessageSquare size={20} />
+              <h2>Đánh giá phòng</h2>
             </div>
-            <textarea
-              onChange={(event) => setCommentContent(event.target.value)}
-              placeholder="Cảm nhận của bạn"
-              rows={4}
-              value={commentContent}
-            />
-            <button className="primary-action" type="submit" disabled={busy || !commentContent.trim()}>
-              <Send size={18} />
-              Gửi
-            </button>
-          </form>
 
-          <div className="comment-list">
-            {comments.slice(0, 4).map((comment, index) => (
-              <div key={`${comment.name}-${comment.created_at}-${index}`}>
-                <strong>{comment.name}</strong>
-                <span>{comment.rating}/5</span>
-                <p>{comment.content}</p>
-              </div>
-            ))}
-          </div>
+            <form className="comment-form" onSubmit={handleCommentSubmit}>
+              <label>
+                Email
+                <input
+                  onChange={(event) => setCommentEmail(event.target.value)}
+                  placeholder={`${session?.user.username ?? 'player'}@local.test`}
+                  type="email"
+                  value={commentEmail}
+                />
+              </label>
+              <fieldset className="rating-fieldset">
+                <legend>Mức đánh giá</legend>
+                <div className="rating-row">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      aria-label={`${value} sao`}
+                      className={rating === value ? 'active' : ''}
+                      key={value}
+                      type="button"
+                      onClick={() => setRating(value)}
+                    >
+                      <Star size={20} fill="currentColor" />
+                      <span>{value}</span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <textarea
+                aria-label="Cảm nhận của bạn"
+                onChange={(event) => setCommentContent(event.target.value)}
+                placeholder="Cảm nhận của bạn..."
+                rows={5}
+                value={commentContent}
+              />
+              <button className="primary-action" type="submit" disabled={busy || !commentContent.trim()}>
+                <Send size={18} />
+                Gửi đánh giá
+              </button>
+            </form>
+          </section>
+
+          <section className="recent-comments">
+            <div className="section-title">
+              <MessageSquare size={20} />
+              <h2>Bình luận gần đây</h2>
+            </div>
+            <div className="comment-list">
+              {comments.length ? (
+                comments.slice(0, 6).map((comment, index) => (
+                  <div key={`${comment.name}-${comment.created_at}-${index}`}>
+                    <strong>{comment.name}</strong>
+                    <span>{comment.rating}/5</span>
+                    <p>{comment.content}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="empty-comments">Hãy là người đầu tiên đánh giá phòng này.</p>
+              )}
+            </div>
+          </section>
         </article>
       </section>
     </>

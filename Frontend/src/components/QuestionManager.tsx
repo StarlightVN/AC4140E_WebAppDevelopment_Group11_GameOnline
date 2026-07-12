@@ -1,5 +1,6 @@
 import {
-  ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
   Filter,
   Pencil,
   Plus,
@@ -30,7 +31,7 @@ const EMPTY_QUESTION: QuestionPayload = {
   difficulty: 1,
 };
 
-type SortMode = 'difficulty-asc' | 'difficulty-desc' | 'newest' | 'oldest';
+type SortDirection = 'asc' | 'desc';
 
 type Props = {
   open: boolean;
@@ -50,7 +51,7 @@ export function QuestionManager({
   onQuestionsChange,
 }: Props) {
   const [difficultyFilter, setDifficultyFilter] = useState('all');
-  const [sortMode, setSortMode] = useState<SortMode>('difficulty-asc');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [editorMode, setEditorMode] = useState<'create' | 'edit' | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<QuestionPayload>({ ...EMPTY_QUESTION });
@@ -74,17 +75,14 @@ export function QuestionManager({
       ? [...questions]
       : questions.filter((question) => question.difficulty === Number(difficultyFilter));
 
-    filtered.sort((left, right) => {
-      if (sortMode === 'difficulty-desc') {
-        return right.difficulty - left.difficulty || right.id - left.id;
-      }
-      if (sortMode === 'newest') return right.id - left.id;
-      if (sortMode === 'oldest') return left.id - right.id;
-      return left.difficulty - right.difficulty || left.id - right.id;
-    });
+    filtered.sort((left, right) =>
+      sortDirection === 'asc'
+        ? left.difficulty - right.difficulty || left.id - right.id
+        : right.difficulty - left.difficulty || right.id - left.id,
+    );
 
     return filtered;
-  }, [difficultyFilter, questions, sortMode]);
+  }, [difficultyFilter, questions, sortDirection]);
 
   function closeManager() {
     if (saving || deletingId !== null) return;
@@ -225,19 +223,6 @@ export function QuestionManager({
               </select>
             </label>
 
-            <label className="question-control">
-              <span><ArrowUpDown size={16} /> Sắp xếp</span>
-              <select
-                onChange={(event) => setSortMode(event.target.value as SortMode)}
-                value={sortMode}
-              >
-                <option value="difficulty-asc">Độ khó tăng dần</option>
-                <option value="difficulty-desc">Độ khó giảm dần</option>
-                <option value="newest">Mới thêm trước</option>
-                <option value="oldest">Cũ nhất trước</option>
-              </select>
-            </label>
-
             <p className="question-result-count">
               Hiển thị <strong>{visibleQuestions.length}</strong> câu
             </p>
@@ -255,7 +240,23 @@ export function QuestionManager({
                   <th scope="col">Câu hỏi</th>
                   <th scope="col">4 đáp án</th>
                   <th scope="col">Đáp án đúng</th>
-                  <th scope="col">Độ khó</th>
+                  <th
+                    aria-sort={sortDirection === 'asc' ? 'ascending' : 'descending'}
+                    scope="col"
+                  >
+                    <button
+                      aria-label={`Sắp xếp độ khó ${sortDirection === 'asc' ? 'giảm dần' : 'tăng dần'}`}
+                      className="question-sort-button"
+                      onClick={() =>
+                        setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+                      }
+                      title={`Đang xếp ${sortDirection === 'asc' ? 'tăng dần' : 'giảm dần'}`}
+                      type="button"
+                    >
+                      Độ khó
+                      {sortDirection === 'asc' ? <ArrowUp size={15} /> : <ArrowDown size={15} />}
+                    </button>
+                  </th>
                   <th scope="col">Thao tác</th>
                 </tr>
               </thead>

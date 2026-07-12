@@ -1122,7 +1122,7 @@ h2 {
 
 .question-toolbar {
   display: grid;
-  grid-template-columns: minmax(180px, 220px) minmax(200px, 250px) minmax(120px, 1fr) auto;
+  grid-template-columns: minmax(180px, 220px) minmax(120px, 1fr) auto;
   align-items: end;
   gap: 12px;
   padding: 14px 22px;
@@ -1180,6 +1180,24 @@ h2 {
   color: var(--muted);
   font-size: 0.78rem;
   text-transform: uppercase;
+}
+
+.question-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.question-sort-button:hover,
+.question-sort-button:focus-visible {
+  color: var(--text);
 }
 
 .question-table th:first-child,

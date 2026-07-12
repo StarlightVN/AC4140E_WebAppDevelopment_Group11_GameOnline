@@ -9,6 +9,14 @@ export type AdminCommentItem = {
   created_at: string;
 };
 
+export type AdminFeedbackItem = {
+  id: number;
+  name: string;
+  email: string;
+  content: string;
+  created_at: string;
+};
+
 export type AdminQuestionItem = {
   id: number;
   content: string;
@@ -24,6 +32,17 @@ export type QuestionPayload = Omit<AdminQuestionItem, 'id'>;
 
 export function getAdminComments(token: string) {
   return apiRequest<{ comments: AdminCommentItem[] }>('/room/admin/comments/all', { token });
+}
+
+export function getAdminFeedbacks(token: string) {
+  return apiRequest<{ feedbacks: AdminFeedbackItem[] }>('/feedback/admin/all', { token });
+}
+
+export function deleteAdminFeedback(feedbackId: number, token: string) {
+  return apiRequest<{ message: string }>(`/feedback/admin/${feedbackId}`, {
+    method: 'DELETE',
+    token,
+  });
 }
 
 export function deleteAdminComment(commentId: number, token: string) {

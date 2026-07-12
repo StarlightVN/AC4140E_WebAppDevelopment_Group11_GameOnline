@@ -1,4 +1,4 @@
-import { Eye, MessageSquare, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
+import { Eye, Mail, MessageSquare, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import {
@@ -7,6 +7,9 @@ import {
   type AdminCommentItem,
   getAdminQuestions,
   type AdminQuestionItem,
+  deleteAdminFeedback,
+  getAdminFeedbacks,
+  type AdminFeedbackItem,
 } from '../api/adminApi';
 import { getViewCount } from '../api/statsApi';
 import { QuestionManager } from '../components/QuestionManager';
@@ -19,6 +22,10 @@ export function AdminPage() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentsError, setCommentsError] = useState('');
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+  const [feedbacks, setFeedbacks] = useState<AdminFeedbackItem[]>([]);
+  const [feedbacksLoading, setFeedbacksLoading] = useState(true);
+  const [feedbacksError, setFeedbacksError] = useState('');
+  const [deletingFeedbackId, setDeletingFeedbackId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<AdminQuestionItem[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [questionsError, setQuestionsError] = useState('');
@@ -44,6 +51,7 @@ export function AdminPage() {
 
     if (!token) {
       setCommentsLoading(false);
+      setFeedbacksLoading(false);
       setQuestionsLoading(false);
       return () => {
         active = false;
@@ -66,6 +74,25 @@ export function AdminPage() {
       .finally(() => {
         if (active) {
           setCommentsLoading(false);
+        }
+      });
+
+    getAdminFeedbacks(token)
+      .then((response) => {
+        if (active) {
+          setFeedbacks(response.feedbacks);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setFeedbacksError(
+            error instanceof Error ? error.message : 'Không thể tải góp ý.',
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setFeedbacksLoading(false);
         }
       });
 
@@ -105,6 +132,21 @@ export function AdminPage() {
       setNotice(error instanceof Error ? error.message : 'Không thể xóa bình luận.');
     } finally {
       setDeletingCommentId(null);
+    }
+  }
+
+  async function handleDeleteFeedback(feedbackId: number) {
+    setDeletingFeedbackId(feedbackId);
+    setNotice('');
+
+    try {
+      await deleteAdminFeedback(feedbackId, token);
+      setFeedbacks((current) => current.filter((item) => item.id !== feedbackId));
+      setNotice('Đã xóa góp ý/liên hệ khỏi database.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Không thể xóa góp ý.');
+    } finally {
+      setDeletingFeedbackId(null);
     }
   }
 
@@ -152,6 +194,41 @@ export function AdminPage() {
           </button>
         </article>
       </div>
+
+      <section className="moderation-section">
+        <div className="section-title">
+          <Mail size={20} />
+          <h2>Góp ý & Liên hệ</h2>
+        </div>
+        <div className="moderation-list">
+          {feedbacksLoading ? (
+            <p className="muted">Đang tải góp ý...</p>
+          ) : feedbacksError ? (
+            <p className="notice">{feedbacksError}</p>
+          ) : feedbacks.length ? (
+            feedbacks.map((feedback) => (
+              <article key={feedback.id}>
+                <div>
+                  <strong>{feedback.name}</strong>
+                  <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: '8px' }}>({feedback.email})</span>
+                  <p style={{ marginTop: '8px', whiteSpace: 'pre-wrap' }}>{feedback.content}</p>
+                </div>
+                <button
+                  className="danger-action"
+                  disabled={deletingFeedbackId === feedback.id}
+                  type="button"
+                  onClick={() => handleDeleteFeedback(feedback.id)}
+                >
+                  <Trash2 size={17} />
+                  {deletingFeedbackId === feedback.id ? 'Đang xóa...' : 'Xóa'}
+                </button>
+              </article>
+            ))
+          ) : (
+            <p className="muted">Không có góp ý hoặc liên hệ nào.</p>
+          )}
+        </div>
+      </section>
 
       <section className="moderation-section">
         <div className="section-title">

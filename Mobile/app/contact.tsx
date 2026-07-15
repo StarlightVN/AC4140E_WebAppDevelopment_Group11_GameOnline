@@ -25,8 +25,17 @@ export default function ContactScreen() {
   const [error, setError] = useState('');
 
   async function handleSubmit() {
-    if (!session || !name.trim() || !email.trim() || !content.trim()) {
+    const nameTrimmed = name.trim();
+    const emailTrimmed = email.trim();
+    const contentTrimmed = content.trim();
+
+    if (!session || !nameTrimmed || !emailTrimmed || !contentTrimmed) {
       setError('Vui lòng nhập đầy đủ họ tên, email và nội dung.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+      setError('Email không đúng định dạng.');
       return;
     }
 
@@ -35,7 +44,7 @@ export default function ContactScreen() {
 
     try {
       await submitFeedback(
-        { name: name.trim(), email: email.trim(), content: content.trim() },
+        { name: nameTrimmed, email: emailTrimmed, content: contentTrimmed },
         session.token,
       );
       setContent('');
@@ -66,7 +75,7 @@ export default function ContactScreen() {
           </View>
 
           <View style={styles.form}>
-            <FormField label="Họ và tên" onChangeText={setName} value={name} />
+            <FormField label="Họ và tên" onChangeText={setName} value={name} maxLength={100} />
             <FormField
               autoCapitalize="none"
               keyboardType="email-address"
@@ -74,6 +83,7 @@ export default function ContactScreen() {
               onChangeText={setEmail}
               placeholder="ban@example.com"
               value={email}
+              maxLength={100}
             />
             <FormField
               label="Nội dung"
@@ -81,6 +91,7 @@ export default function ContactScreen() {
               onChangeText={setContent}
               placeholder="Mô tả góp ý hoặc lỗi bạn gặp..."
               value={content}
+              maxLength={1000}
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <AppButton

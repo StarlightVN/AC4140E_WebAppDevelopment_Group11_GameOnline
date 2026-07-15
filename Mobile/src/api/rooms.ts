@@ -9,11 +9,10 @@ import type {
 
 import { apiRequest } from './client';
 
-export function createRoom(userId: number, token: string) {
+export function createRoom(token: string) {
   return apiRequest<CreateRoomResponse>('/room/create', {
     method: 'POST',
     token,
-    body: JSON.stringify({ userId }),
   });
 }
 
@@ -23,15 +22,18 @@ export function getRoom(roomCode: string, token: string) {
 
 export function submitAnswers(
   roomCode: string,
-  userId: number,
   answers: Record<number, AnswerKey>,
   token: string,
 ) {
   return apiRequest<SubmitScoreResponse>(`/room/${roomCode}/submit`, {
     method: 'POST',
     token,
-    body: JSON.stringify({ userId, answers }),
+    body: JSON.stringify({ answers }),
   });
+}
+
+export function getMyResult(roomCode: string, token: string) {
+  return apiRequest<{ correctCount: number }>(`/room/${roomCode}/results/me`, { token });
 }
 
 export function getLeaderboard(roomCode: string, token: string) {

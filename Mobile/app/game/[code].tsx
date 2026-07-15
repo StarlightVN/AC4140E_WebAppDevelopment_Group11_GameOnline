@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -16,6 +16,7 @@ import { useSession } from '@/src/context/SessionContext';
 import { gameStyles as styles } from '@/src/styles';
 import { colors } from '@/src/theme';
 import type { AnswerKey, Question, RoomQuestionsResponse } from '@/src/types';
+import { calculateProgress, getTimerColor } from '@/src/utils/gameHelpers';
 
 const QUESTION_SECONDS = 20;
 const answerKeys: AnswerKey[] = ['A', 'B', 'C', 'D'];
@@ -38,9 +39,7 @@ export default function GameScreen() {
   const [error, setError] = useState('');
 
   const question = room?.questions[questionIndex];
-  const progress = room?.questions.length
-    ? ((questionIndex + 1) / room.questions.length) * 100
-    : 0;
+  const progress = room ? calculateProgress(questionIndex, room.questions.length) : 0;
   const selectedAnswer = question ? answers[question.id] : undefined;
   const isLastQuestion = room ? questionIndex === room.questions.length - 1 : false;
 
@@ -58,26 +57,26 @@ export default function GameScreen() {
   }, [code, session]);
 
   useEffect(() => {
-    if (!question) {
+    if (!question || submitting) {
       return;
     }
 
-    const timer = setInterval(() => {
-      setTimeLeft((current) => Math.max(0, current - 1));
+    if (timeLeft === 0) {
+      handleAdvance();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft((current) => current - 1);
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [question]);
+    return () => clearTimeout(timer);
+  }, [question, timeLeft, submitting]);
 
-  const timerColor = useMemo(() => {
-    if (timeLeft <= 5) return colors.red;
-    if (timeLeft <= 10) return colors.gold;
-    return colors.teal;
-  }, [timeLeft]);
+  const timerColor = getTimerColor(timeLeft);
 
   if (!session) {
-    router.replace('/auth');
-    return null;
+    return <Redirect href="/auth" />;
   }
 
   if (loading) {
@@ -99,12 +98,11 @@ export default function GameScreen() {
     setError('');
 
     try {
-      const result = await submitAnswers(code, session.user.id, answers, session.token);
+      const result = await submitAnswers(code, answers, session.token);
       router.replace({
         pathname: '/results/[code]',
         params: {
           code,
-          score: String(result.correctCount),
           total: String(room.questions.length),
         },
       });

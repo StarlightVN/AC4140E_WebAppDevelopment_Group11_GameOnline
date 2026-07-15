@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import {
   createContext,
   type PropsWithChildren,
@@ -26,13 +26,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
+    SecureStore.getItemAsync(STORAGE_KEY)
       .then((value) => {
         if (value) {
           setSession(JSON.parse(value) as AuthSession);
         }
       })
-      .catch(() => AsyncStorage.removeItem(STORAGE_KEY))
+      .catch(() => SecureStore.deleteItemAsync(STORAGE_KEY))
       .finally(() => setLoading(false));
   }, []);
 
@@ -41,11 +41,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
       session,
       loading,
       signIn: async (nextSession) => {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+        await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(nextSession));
         setSession(nextSession);
       },
       signOut: async () => {
-        await AsyncStorage.removeItem(STORAGE_KEY);
+        await SecureStore.deleteItemAsync(STORAGE_KEY);
         setSession(null);
       },
     }),

@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Image,
@@ -18,6 +18,8 @@ import { useSession } from '@/src/context/SessionContext';
 import { homeStyles as styles } from '@/src/styles';
 import { colors, spacing } from '@/src/theme';
 
+import { formatRoomCode } from '@/src/utils/gameHelpers';
+
 const BANNER_ASPECT_RATIO = 2.05;
 
 export default function HomeScreen() {
@@ -35,8 +37,7 @@ export default function HomeScreen() {
   );
 
   if (!activeSession) {
-    router.replace('/auth');
-    return null;
+    return <Redirect href="/auth" />;
   }
 
   const { token, user } = activeSession;
@@ -46,7 +47,7 @@ export default function HomeScreen() {
     setError('');
 
     try {
-      const response = await createRoom(user.id, token);
+      const response = await createRoom(token);
       router.push({ pathname: '/room/[code]', params: { code: response.roomCode } });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Không thể tạo phòng.');
@@ -56,7 +57,7 @@ export default function HomeScreen() {
   }
 
   function handleJoinRoom() {
-    const code = roomCode.replace(/\D/g, '').slice(0, 6);
+    const code = formatRoomCode(roomCode);
 
     if (code.length !== 6) {
       setError('Mã phòng phải có đúng 6 chữ số.');
@@ -132,7 +133,7 @@ export default function HomeScreen() {
           <TextInput
             keyboardType="number-pad"
             maxLength={6}
-            onChangeText={(value) => setRoomCode(value.replace(/\D/g, ''))}
+            onChangeText={(value) => setRoomCode(formatRoomCode(value))}
             onSubmitEditing={handleJoinRoom}
             placeholder="Nhập 6 chữ số"
             placeholderTextColor={colors.muted}

@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   RefreshControl,
@@ -47,37 +47,11 @@ export default function RoomScreen() {
   }, [code, session]);
 
   useEffect(() => {
-    if (!session || !code) {
-      return;
-    }
-
-    let active = true;
-
-    getRoom(code, session.token)
-      .then((payload) => {
-        if (active) {
-          setRoom(payload);
-        }
-      })
-      .catch((requestError) => {
-        if (active) {
-          setError(requestError instanceof Error ? requestError.message : 'Không thể tải phòng.');
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [code, session]);
+    loadRoom();
+  }, [loadRoom]);
 
   if (!session) {
-    router.replace('/auth');
-    return null;
+    return <Redirect href="/auth" />;
   }
 
   if (loading) {

@@ -11,7 +11,10 @@ type RequestOptions = RequestInit & {
   token?: string;
 };
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  { token, ...options }: RequestOptions = {},
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
   const headers = new Headers(options.headers);
@@ -20,8 +23,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.set('Content-Type', 'application/json');
   }
 
-  if (options.token) {
-    headers.set('Authorization', `Bearer ${options.token}`);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   try {
